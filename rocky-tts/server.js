@@ -26,7 +26,7 @@ const MAX_SPEAK_CHARS = 6000;
 
 // Resolve the speaker. Voice clones are private to the Hume account that made
 // them, so a shared HUME_VOICE_ID 404s for everyone else. Each user clones the
-// shipped rocky-voice-sample.mp3 on their own account and puts the id in .env.
+// shipped RockyVoice-James.wav on their own account and puts the id in .env.
 // Until they do, fall back to a stock Hume voice so the app still speaks.
 const FALLBACK_VOICE_NAME = process.env.HUME_FALLBACK_VOICE || "Male English Actor";
 function configuredVoiceId() {
@@ -270,7 +270,7 @@ app.listen(PORT, () => {
   } else {
     console.log(
       `Voice: stock "${FALLBACK_VOICE_NAME}" — no clone set.\n` +
-      `       For real Rocky, clone rocky-voice-sample.mp3 and set HUME_VOICE_ID in .env (see README).`
+      `       For real Rocky, clone RockyVoice-James.wav and set HUME_VOICE_ID in .env (see README).`
     );
   }
 });

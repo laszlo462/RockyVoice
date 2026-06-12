@@ -116,11 +116,11 @@ Then activate the Rocky skill, open **http://localhost:3333** in your browser, c
 
 Voice clones on Hume are **private to the account that made them** — a shared voice id returns `404` for everyone else. So each person makes their own from the same source audio. Same recording in, same Rocky out.
 
-This repo ships the source clip: [`rocky-tts/rocky-voice-sample.mp3`](rocky-tts/rocky-voice-sample.mp3) (≈45s of Rocky).
+This repo ships a source clip: [`rocky-tts/public/RockyVoice-James.wav`](rocky-tts/public/RockyVoice-James.wav).
 
 1. Sign in at [platform.hume.ai](https://platform.hume.ai).
 2. Go to **Voice Library → Clone Voice** (or **Add Voice → Upload**).
-3. Upload `rocky-tts/rocky-voice-sample.mp3`, name it `Rocky`, and create it.
+3. Upload `rocky-tts/public/RockyVoice-James.wav`, name it `Rocky`, and create it.
 4. Open the new voice and copy its **voice id**.
 5. Paste it into `rocky-tts/.env`:
    ```
@@ -191,7 +191,7 @@ Keep Rocky away from client work, real documents, anything where exact wording c
 
 ## Credit
 
-Rocky's voice clone was trained using scrubbed audio shared by [ballongmaskin](https://github.com/ballongmaskin), who built an earlier Rocky voice project and generously provided the [training audio](https://pedramamini.com/dropbox/rocky_training_audio_scrubbed.wav). The bundled `rocky-tts/rocky-voice-sample.mp3` is a ~45-second excerpt of that audio, included so you can clone your own voice.
+The bundled voice clip (`rocky-tts/public/RockyVoice-James.wav`) is an original recording by the repo author, provided so you can clone your own voice.
 
 Persistence, safety-clarity, and off-switch ideas borrowed from [caveman](https://github.com/JuliusBrussee/caveman) by Julius Brussee — a token-compression skill built on the same "small mouth, big brain" idea.
 
