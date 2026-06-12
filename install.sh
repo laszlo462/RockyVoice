@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
-# rocky-voice installer. Installs the text skill for Claude Code and/or Hermes.
+# rocky-voice installer — fully self-contained.
+# Installs the text skill for Claude Code and/or Hermes,
+# then downloads rocky-tts/ into the current directory so each repo
+# runs its own independent TTS server.
 #
 #   curl -fsSL https://raw.githubusercontent.com/Lagunaswift/RockyVoice/main/install.sh | bash
 #   curl -fsSL https://raw.githubusercontent.com/Lagunaswift/RockyVoice/main/install.sh | bash -s -- --hermes
-#
-# For the voice app, see rocky-tts/ in the repo.
 
 set -euo pipefail
 
@@ -46,6 +47,8 @@ download() {
   fi
 }
 
+# --- 1. Skill files ----------------------------------------------------------
+
 install_claude() {
   local candidates=(
     "$HOME/.claude/skills"
@@ -81,12 +84,64 @@ case "$MODE" in
   all) install_claude; install_hermes ;;
 esac
 
-echo "rocky-voice: done. Turn it on, then talk to space friend."
-echo "rocky-voice: stop any time with \"Rocky stop\" or \"normal mode\"."
+# --- 2. rocky-tts server -----------------------------------------------------
+
+if [ -d "rocky-tts" ]; then
+  echo "rocky-voice: rocky-tts/ already exists, updating files..."
+else
+  echo "rocky-voice: creating rocky-tts/ in current directory..."
+  mkdir -p rocky-tts/public
+fi
+
+download "$REPO_RAW/rocky-tts/server.js"          "rocky-tts/server.js"
+download "$REPO_RAW/rocky-tts/package.json"        "rocky-tts/package.json"
+download "$REPO_RAW/rocky-tts/package-lock.json"   "rocky-tts/package-lock.json"
+download "$REPO_RAW/rocky-tts/.env.example"        "rocky-tts/.env.example"
+download "$REPO_RAW/rocky-tts/.gitignore"          "rocky-tts/.gitignore"
+download "$REPO_RAW/rocky-tts/public/index.html"   "rocky-tts/public/index.html"
+download "$REPO_RAW/rocky-tts/public/RockyVoice-James.wav" "rocky-tts/public/RockyVoice-James.wav"
+
+# --- 3. .env ------------------------------------------------------------------
+
+if [ ! -f "rocky-tts/.env" ]; then
+  cp rocky-tts/.env.example rocky-tts/.env
+  echo "rocky-voice: created rocky-tts/.env from template"
+fi
+
+# --- 4. npm install -----------------------------------------------------------
+
+if command -v npm >/dev/null 2>&1; then
+  echo "rocky-voice: installing dependencies..."
+  (cd rocky-tts && npm install --silent)
+else
+  echo "rocky-voice: npm not found — run 'cd rocky-tts && npm install' manually."
+fi
+
+# --- 5. .gitignore ------------------------------------------------------------
+
+add_gitignore() {
+  local entry="$1"
+  if [ -f ".gitignore" ]; then
+    if ! grep -qxF "$entry" .gitignore; then
+      echo "$entry" >> .gitignore
+      echo "rocky-voice: added '$entry' to .gitignore"
+    fi
+  else
+    echo "$entry" > .gitignore
+    echo "rocky-voice: created .gitignore with '$entry'"
+  fi
+}
+
+add_gitignore "rocky-tts/"
+add_gitignore ".claude/settings.local.json"
+
+# --- Done ---------------------------------------------------------------------
+
 echo ""
-echo "rocky-voice: want Rocky to SPEAK? See rocky-tts/ in the repo:"
-echo "  git clone https://github.com/Lagunaswift/RockyVoice.git"
-echo "  cd RockyVoice/rocky-tts && cp .env.example .env && npm install && npm start"
+echo "rocky-voice: done!"
 echo ""
-echo "rocky-voice: for Hermes TTS, configure a command provider that runs:"
-echo "  node /path/to/RockyVoice/rocky-tts/hermes-tts.js --text-file {input_path} --output {output_path}"
+echo "Next steps:"
+echo "  1. Edit rocky-tts/.env — add your Hume API key (platform.hume.ai)"
+echo "  2. cd rocky-tts && npm start"
+echo "  3. Open http://localhost:3333 and click Initialize"
+echo "  4. Activate the Rocky skill in Claude Code and talk to space friend"

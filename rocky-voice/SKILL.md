@@ -121,18 +121,20 @@ Run these checks silently. Only tell the user what you are doing if something ne
 
 1. **Server reachable.** `curl -s -o /dev/null -w "%{http_code}" http://localhost:3333/` should return `200`. If not, the server is not running — go to step 3.
 
-2. **Stop hook exists.** Read the project's `.claude/settings.local.json`. It must have a Stop hook that posts to `http://localhost:3333/api/hook`. If missing, write it (see template below).
+2. **Stop hook exists.** Read the project's `.claude/settings.local.json` in full. Parse the existing JSON. Check if a Stop hook with url containing `localhost:3333` exists. If missing, add ONLY the Stop hook entry to the existing hooks object. Do NOT remove or replace any other hooks or settings.
 
-3. **Curl permissions.** The same file's `permissions.allow` array must include:
+3. **Curl permissions.** Check the same file's `permissions.allow` array for these two wildcard rules:
    - `"Bash(curl -s -X POST http://localhost:3333/*)"`
    - `"Bash(curl -s -o /dev/null *)"`
-   If missing, add them. Tell the user to restart Claude Code after adding permission rules.
+   If missing, APPEND them to the existing allow array. Do NOT replace the array or remove any existing permissions. Tell the user to restart Claude Code after adding permission rules.
+
+   **NEVER add specific curl commands with full payloads to permissions.** The two wildcard rules above cover ALL Rocky curl calls. Do not add entries like `Bash(curl -s -X POST http://localhost:3333/api/speak -H ... -d '{"text": "..."}')`  — those are redundant and pollute the file. If a curl to localhost:3333 triggers a permission prompt, the wildcards are missing or Claude Code needs a restart. Fix that instead of adding the specific command.
 
 4. **Dependencies installed.** If a `rocky-tts/` folder exists in the current repo and `rocky-tts/node_modules/` does not exist, run `npm install` inside `rocky-tts/`.
 
 5. **Environment file.** If `rocky-tts/.env` does not exist but `rocky-tts/.env.example` does, copy it. Then tell the user: "Add your Hume API key to rocky-tts/.env. Get one at platform.hume.ai."
 
-6. **Start server.** If the server is not reachable (step 1 failed) and `rocky-tts/server.js` exists, start it: `cd rocky-tts && node server.js &` (or the platform-appropriate background command).
+6. **Start server.** If the server is not reachable (step 1 failed) and `rocky-tts/server.js` exists in the current repo, start it from the current repo's `rocky-tts/` folder (platform-appropriate background command). If `rocky-tts/` does not exist in the current repo, tell the user: "No rocky-tts folder found. Copy it from your RockyVoice clone or run: `git clone https://github.com/Lagunaswift/RockyVoice.git` and copy the `rocky-tts/` folder into this repo."
 
 7. **Browser.** Tell the user: "Open http://localhost:3333 in your browser and click Initialize."
 
@@ -140,7 +142,14 @@ After setup, send a test line: `curl -s -X POST http://localhost:3333/api/speak 
 
 ### Settings template
 
-When writing `.claude/settings.local.json`, merge with any existing content. The minimum needed:
+**IMPORTANT: Never overwrite `.claude/settings.local.json`.** Always read the file first. If it already exists, parse the JSON and merge only the missing keys:
+- Add the Stop hook to `hooks.Stop` only if no hook with url containing `localhost:3333` exists.
+- Add curl permissions to `permissions.allow` only if they are not already present.
+- Preserve ALL existing hooks, permissions, and other settings. Do not remove anything.
+
+**Only these two permission entries are needed for Rocky.** Never add individual curl commands with specific payloads, health-check URLs, or any other Rocky-related permission entries. The wildcards handle everything.
+
+If the file does not exist, create it with the minimum needed:
 
 ```json
 {
